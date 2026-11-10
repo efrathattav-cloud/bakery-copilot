@@ -29,7 +29,6 @@ from .config import ROOT, settings
 from .costs import Usage, cost_usd
 from .db import Conversation, Message, Run, User, utcnow
 from .tools import registry
-from .tools.sales import branches, data_range
 
 try:  # the SDK is optional at import time so tests run without it configured
     import anthropic
@@ -39,8 +38,8 @@ except ImportError:  # pragma: no cover
 MAX_TOOL_ROUNDS = 6
 SYSTEM_PATH = ROOT / "app" / "prompts" / "system.md"
 FALLBACK_MODELS = {"claude-opus-5-5", "claude-opus-5", "claude-sonnet-5-5", "claude-fable-5-1"}
-REFUSAL_TEXT = ("I can't help with that request. If it is about sales or invoices, try rephrasing it; "
-                "for anything else, ask Dana.")
+REFUSAL_TEXT = ("לא אוכל לעזור בבקשה הזו כפי שהיא מנוסחת. "
+                "אפשר לנסח אותה אחרת, או לבקש טיוטה, משוב על טקסט או תגובה לצילום מסך.")
 
 
 # ---------------------------------------------------------------------------
@@ -134,12 +133,8 @@ def get_model_client() -> ModelClient:
 # ---------------------------------------------------------------------------
 
 def build_system(db: Session) -> list[dict]:
-    d_from, d_to = data_range(db)
     today = datetime.now(ZoneInfo(settings.timezone)).date()
-    text = (SYSTEM_PATH.read_text(encoding="utf-8")
-            .replace("{{DATA_FROM}}", str(d_from or "unknown")).replace("{{DATA_TO}}", str(d_to or "unknown"))
-            .replace("{{BRANCHES}}", ", ".join(branches(db)) or "unknown")
-            .replace("{{TODAY}}", today.isoformat()))
+    text = SYSTEM_PATH.read_text(encoding="utf-8").replace("{{TODAY}}", today.isoformat())
     # One cached block: tools + system form the stable prefix every turn reuses.
     return [{"type": "text", "text": text, "cache_control": {"type": "ephemeral"}}]
 
@@ -177,14 +172,10 @@ def _summarise_result(result_text: str) -> str:
         return result_text[:90]
     if "error" in r:
         return f"error: {str(r['error'])[:80]}"
-    if "status" in r and "created" in r:  # log_invoice
-        return f"{'created' if r['created'] else r.get('reason', 'existing')} · {r['status']}" + (" · flagged" if r.get("flagged") else "")
-    if "matches" in r:  # lookup_supplier
-        return f"{len(r['matches'])} match" + ("" if len(r["matches"]) == 1 else "es")
-    if "row_count" in r:  # sales_query grouped
-        return f"{r['row_count']} rows · {r['metric']} by {r['group_by']}"
-    if "value" in r:  # sales_query total
-        return f"{r['metric']} = {r['value']}"
+    if "issues" in r:  # check_text
+        return "clean" if r.get("ok") else f"{len(r['issues'])} issue(s)"
+    if "count" in r:  # search_content
+        return f"{r['count']} found"
     return result_text[:90]
 
 
@@ -209,7 +200,7 @@ def run_turn(db: Session, *, user: User, conversation: Conversation | None, text
     image_ref = f"img_{hashlib.sha256(image['data'].encode()).hexdigest()[:10]}" if image else None
 
     if conversation is None:
-        conversation = Conversation(user_id=user.id, title=(text or "Invoice photo")[:60])
+        conversation = Conversation(user_id=user.id, title=(text or "צילום מסך")[:60])
         db.add(conversation)
         db.commit()
         db.refresh(conversation)
@@ -218,7 +209,7 @@ def run_turn(db: Session, *, user: User, conversation: Conversation | None, text
     # 1. The user's message is saved first: it counts for the rate limit even if the stream dies.
     stored = text + (f"\n[image {image_ref}]" if image_ref else "")
     user_msg = Message(conversation_id=conversation.id, user_id=user.id, role="user",
-                       content=stored or "(invoice photo)", has_image=bool(image))
+                       content=stored or "(צילום מסך)", has_image=bool(image))
     db.add(user_msg)
     conversation.updated_at = utcnow()
     db.commit()
@@ -228,7 +219,7 @@ def run_turn(db: Session, *, user: User, conversation: Conversation | None, text
     content: list[dict] = []
     if image:
         content.append({"type": "image", "source": {"type": "base64", "media_type": image["media_type"], "data": image["data"]}})
-    prompt_text = text or "Please read this invoice and log it."
+    prompt_text = text or "זה צילום מסך של תגובה מהקבוצה. תציעי לי תשובה."
     if image_ref:
         prompt_text += f"\n\n(image reference: {image_ref})"
     content.append({"type": "text", "text": prompt_text})

@@ -7,7 +7,7 @@
 import { defineRailway, github, postgres, project, service, volume } from "railway/iac";
 
 export default defineRailway(() => {
-  const bakeryCopilot = github("MaceTenth/bakery-copilot");
+  const repo = github("efrathattav-cloud/bakery-copilot");
 
   const Postgres = postgres("Postgres", { region: "iad" });
   Postgres.networking = { privateNetworkEndpoint: "postgres" };
@@ -16,7 +16,7 @@ export default defineRailway(() => {
   // The app: UI and API in one service, built by Railpack from
   // requirements.txt and .python-version (no Dockerfile).
   const web = service("web", {
-    source: bakeryCopilot,
+    source: repo,
     build: { buildEnvironment: "V3", builder: "RAILPACK" },
     deploy: {
       startCommand: "uvicorn app.main:app --host 0.0.0.0 --port $PORT",
@@ -29,21 +29,10 @@ export default defineRailway(() => {
     replicas: { "iad": 1 },
   });
 
-  // The morning digest: same repo and build, runs on a schedule and exits.
-  // Railway cron is UTC: 04:30 UTC is 07:30 Israel in summer, 06:30 in winter.
-  const digest = service("digest", {
-    source: bakeryCopilot,
-    build: { buildEnvironment: "V3", builder: "RAILPACK" },
-    deploy: {
-      startCommand: "python -m app.digest",
-      cronSchedule: "30 4 * * *",
-      restartPolicyType: "NEVER",
-    },
-    replicas: { "iad": 1 },
-  });
+  // No cron service: the morning card is built inside the app (GET /api/morning).
 
-  return project("bakery-copilot", {
+  return project("bocharot-copilot", {
     variables: { managed: false },
-    resources: [web, digest, Postgres, postgresVolume],
+    resources: [web, Postgres, postgresVolume],
   });
 });

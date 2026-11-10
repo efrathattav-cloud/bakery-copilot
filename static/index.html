@@ -1,20 +1,25 @@
 <!doctype html>
-<html lang="en">
+<html lang="he" dir="rtl">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Bakery Copilot</title>
+  <title>בוחרות באומץ</title>
+  <link rel="icon" type="image/png" href="/static/favicon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/static/styles.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.2/marked.min.js" defer></script>
 </head>
 <body>
   <div id="login" class="modal hidden" role="dialog" aria-labelledby="login-title">
     <form id="login-form" class="card">
-      <p class="kicker">BAKERY COPILOT</p>
-      <h1 id="login-title">Sign in</h1>
-      <label>Your name<input id="login-name" name="name" autocomplete="username" required minlength="2" maxlength="40" placeholder="Dana"></label>
-      <label>Team password<input id="login-password" name="password" type="password" autocomplete="current-password" required></label>
-      <button type="submit" class="primary">Enter</button>
+      <img class="login-logo" src="/static/logo.png" alt="">
+      <h1 id="login-title">בוחרות באומץ</h1>
+      <p class="subtitle">קופיילוט התוכן שלך</p>
+      <label>השם שלך<input id="login-name" name="name" autocomplete="username" required minlength="2" maxlength="40" placeholder="אפרת־יערה"></label>
+      <label>סיסמה<input id="login-password" name="password" type="password" autocomplete="current-password" required></label>
+      <button type="submit" class="primary wide">כניסה</button>
       <p id="login-error" class="error" role="alert"></p>
     </form>
   </div>
@@ -22,42 +27,39 @@
   <div id="app" class="app hidden">
     <aside class="sidebar">
       <div class="brand">
-        <span class="dot"></span>
-        <div><strong>Bakery Copilot</strong><small id="who"></small></div>
+        <img class="logo" src="/static/logo.png" alt="">
+        <div><strong>בוחרות באומץ</strong><small id="who"></small></div>
       </div>
-      <button id="new-chat" class="primary wide">+ New chat</button>
-      <nav id="conversations" class="conversations" aria-label="Conversations"></nav>
+      <button id="new-chat" class="primary wide">+ שיחה חדשה</button>
+      <nav id="conversations" class="conversations" aria-label="שיחות"></nav>
       <div class="sidebar-foot">
-        <button id="toggle-invoices" class="ghost">Invoices</button>
-        <button id="logout" class="ghost">Sign out</button>
+        <button id="toggle-library" class="ghost">📚 הספרייה שלי</button>
+        <button id="logout" class="ghost">יציאה</button>
       </div>
     </aside>
 
     <main class="main">
       <header class="topbar">
-        <h2 id="conv-title">New chat</h2>
+        <h2 id="conv-title">שיחה חדשה</h2>
         <span id="status" class="status"></span>
       </header>
 
       <section id="messages" class="messages" aria-live="polite"></section>
 
       <form id="composer" class="composer">
-        <label class="attach" title="Attach an invoice photo">
+        <label class="attach" title="צירוף צילום מסך של תגובה מהקבוצה">
           <input id="image" type="file" accept="image/png,image/jpeg,image/webp,image/gif">
           <span>📎</span>
         </label>
-        <textarea id="input" rows="1" placeholder="Ask about sales, or attach an invoice…" required></textarea>
-        <button id="send" type="submit" class="primary">Send</button>
+        <textarea id="input" rows="1" placeholder="מה נכתוב היום? אפשר גם לצרף צילום מסך של תגובה…" required></textarea>
+        <button id="send" type="submit" class="primary">שליחה</button>
       </form>
       <p id="attachment" class="attachment hidden"></p>
     </main>
 
-    <aside id="invoices" class="panel hidden" aria-label="Recent invoices">
-      <header><h3>Recent invoices</h3><button id="close-invoices" class="ghost">✕</button></header>
-      <table>
-        <thead><tr><th>Date</th><th>Supplier</th><th>Amount</th><th>Status</th></tr></thead>
-        <tbody id="invoice-rows"></tbody>
-      </table>
+    <aside id="library" class="panel hidden" aria-label="הספרייה שלי">
+      <header><h3>הספרייה שלי</h3><button id="close-library" class="ghost" aria-label="סגירה">✕</button></header>
+      <div id="library-items" class="library-items"></div>
     </aside>
   </div>
 

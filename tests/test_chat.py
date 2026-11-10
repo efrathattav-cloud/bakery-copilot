@@ -119,11 +119,16 @@ def test_image_message_carries_a_reference(client, db, logged_in, fake):
     assert user_msg.has_image is True and "[image img_" in user_msg.content
 
 
-def test_system_prompt_names_the_real_branches(client, db):
-    # Issue #3: unnamed, the model made one up ("Haifa") for its examples.
+def test_system_prompt_keeps_the_brand_voice_rules(client, db):
+    # The content copilot: the prompt must name the community, keep the core
+    # voice rules, and have every placeholder filled (today's date included).
+    import datetime as dt
+
     text = agent_module.build_system(db)[0]["text"]
-    for branch in ("Tel Aviv - Florentin", "Tel Aviv - Dizengoff", "Ramat Gan", "Herzliya"):
-        assert branch in text
+    assert "בוחרות באומץ" in text
+    assert "Never use the long dash" in text
+    assert "Never invent" in text
+    assert dt.date.today().isoformat()[:4] in text
     assert "{{" not in text
 
 

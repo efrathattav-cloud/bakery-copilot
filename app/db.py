@@ -120,6 +120,19 @@ class Invoice(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow, index=True)
 
 
+class ContentItem(Base):
+    """One text in the content library: a draft she kept or something she published."""
+
+    __tablename__ = "content_items"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    format: Mapped[str] = mapped_column(String(20), index=True)  # community | post | marketing | recording | exercise | reply | other
+    topic: Mapped[str] = mapped_column(String(120), index=True)  # a few words, e.g. "הפחד לאכזב"
+    text: Mapped[str] = mapped_column(Text)
+    status: Mapped[str] = mapped_column(String(12), default="draft", index=True)  # draft | published
+    saved_by: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow, index=True)
+
+
 class Sale(Base):
     """One line of the Lesson 4 bakery dataset (29,115 rows, Sep 2025 to Aug 2026)."""
 

@@ -6,9 +6,11 @@ from typing import Any
 
 from sqlalchemy.orm import Session
 
-from . import invoices, quality, sales
+from . import invoices, library, quality, sales
 
-TOOLS: list[dict[str, Any]] = [
+# The bakery tools are no longer shown to the model. Their code stays until the
+# digest and the Invoices screen are replaced (step 6), then it is removed.
+BAKERY_TOOLS: list[dict[str, Any]] = [
     {
         "name": "sales_query",
         "description": (
@@ -68,6 +70,10 @@ TOOLS: list[dict[str, Any]] = [
             "additionalProperties": False,
         },
     },
+]
+
+# What the model sees.
+TOOLS: list[dict[str, Any]] = [
     {
         "name": "check_text",
         "description": (
@@ -83,6 +89,46 @@ TOOLS: list[dict[str, Any]] = [
                 "format": {"type": "string", "enum": quality.FORMATS, "description": "community (group message), reply (to a participant), post, marketing, recording (text with a voice note), exercise, or other"},
             },
             "required": ["text"],
+            "additionalProperties": False,
+        },
+    },
+    {
+        "name": "save_content",
+        "description": (
+            "Save one text to her content library. Call it only when she asks to keep a text "
+            "('תשמור', 'שמרי את זה') or tells you she published it ('פרסמתי'). Never save drafts on your own. "
+            "Save the final text exactly as agreed, with a short Hebrew topic of a few words."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "text": {"type": "string", "description": "the full text, exactly as she approved it"},
+                "topic": {"type": "string", "description": "a few words in Hebrew, e.g. 'הפחד לאכזב'"},
+                "format": {"type": "string", "enum": quality.FORMATS},
+                "status": {"type": "string", "enum": list(library.STATUSES), "description": "published if she says she posted it, otherwise draft"},
+            },
+            "required": ["text", "topic"],
+            "additionalProperties": False,
+        },
+    },
+    {
+        "name": "search_content",
+        "description": (
+            "Search her content library: what she already wrote, on which topic, when. "
+            "Use it for questions like 'על מה כתבתי החודש?' or 'מתי כתבתי על אשמה?', and before drafting "
+            "to see whether she wrote on the topic recently. Matches the query in the topic or the text. "
+            "Returns newest first, with a preview of each text."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "query": {"type": "string", "description": "a word or phrase in Hebrew; omit to list everything"},
+                "format": {"type": "string", "enum": quality.FORMATS},
+                "status": {"type": "string", "enum": list(library.STATUSES)},
+                "date_from": {"type": "string", "description": "inclusive start date YYYY-MM-DD"},
+                "date_to": {"type": "string", "description": "inclusive end date YYYY-MM-DD"},
+                "limit": {"type": "integer", "minimum": 1, "maximum": 50, "default": 10},
+            },
             "additionalProperties": False,
         },
     },
@@ -103,6 +149,10 @@ def execute(name: str, tool_input: dict[str, Any], db: Session, *, user_id: int 
             result = invoices.log_invoice(db, logged_by=user_id, **_clean(tool_input))
         elif name == "check_text":
             result = quality.check_text(str(tool_input.get("text", "")), str(tool_input.get("format") or "other"))
+        elif name == "save_content":
+            result = library.save_content(db, saved_by=user_id, **_clean(tool_input))
+        elif name == "search_content":
+            result = library.search_content(db, **_clean(tool_input))
         else:
             result = {"error": f"unknown tool '{name}'"}
     except Exception as exc:  # the loop must survive a bad input; the model sees the error

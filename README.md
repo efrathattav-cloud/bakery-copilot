@@ -4,7 +4,7 @@ A content copilot for Efrat-Yaara Hattav's women's community **"בוחרות ב�
 
 Built from [MaceTenth/bakery-copilot](https://github.com/MaceTenth/bakery-copilot) (course final project, task 9). Same four layers, a chat UI, a FastAPI backend with an agent loop, Claude, and Postgres, with a new job.
 
-**Live on Railway:** _link added after the first deploy_
+**Live on Railway:** https://bakery-copilot-production-c4e1feb8.up.railway.app
 
 ## What it does
 

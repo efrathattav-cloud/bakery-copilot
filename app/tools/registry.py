@@ -6,7 +6,7 @@ from typing import Any
 
 from sqlalchemy.orm import Session
 
-from . import invoices, sales
+from . import invoices, quality, sales
 
 TOOLS: list[dict[str, Any]] = [
     {
@@ -68,6 +68,24 @@ TOOLS: list[dict[str, Any]] = [
             "additionalProperties": False,
         },
     },
+    {
+        "name": "check_text",
+        "description": (
+            "Mechanical brand-voice check of a Hebrew text: long dashes, banned phrases and openings, "
+            "too many exclamation marks or questions, emoji outside the allowed list, and length for the format. "
+            "Call it on every draft before you show it, and on any text the user asks you to review. "
+            "It does not judge tone or meaning; that stays with you."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "text": {"type": "string", "description": "the full text to check, exactly as it would be published"},
+                "format": {"type": "string", "enum": quality.FORMATS, "description": "community (group message), reply (to a participant), post, marketing, recording (text with a voice note), exercise, or other"},
+            },
+            "required": ["text"],
+            "additionalProperties": False,
+        },
+    },
 ]
 
 TOOL_NAMES = {t["name"] for t in TOOLS}
@@ -83,6 +101,8 @@ def execute(name: str, tool_input: dict[str, Any], db: Session, *, user_id: int 
             result = invoices.lookup_supplier(db, name=str(tool_input.get("name", "")))
         elif name == "log_invoice":
             result = invoices.log_invoice(db, logged_by=user_id, **_clean(tool_input))
+        elif name == "check_text":
+            result = quality.check_text(str(tool_input.get("text", "")), str(tool_input.get("format") or "other"))
         else:
             result = {"error": f"unknown tool '{name}'"}
     except Exception as exc:  # the loop must survive a bad input; the model sees the error

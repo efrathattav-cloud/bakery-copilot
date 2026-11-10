@@ -75,6 +75,21 @@
       <span class="hint" data-q="תבדקי לי את הטקסט הזה לפני שאני מפרסמת: ">🔍 תבדקי לי טקסט</span>
       <span class="hint" data-q="תכתבי פוסט לפייסבוק על ">🌱 פוסט לפייסבוק על…</span></div>`;
     $("messages").querySelectorAll(".hint").forEach((h) => h.addEventListener("click", () => { $("input").value = h.dataset.q; $("input").focus(); }));
+    loadMorning();
+  }
+  async function loadMorning() {
+    let card;
+    try { card = await api("/api/morning"); } catch (_) { return; }
+    const empty = $("messages").querySelector(".empty"); if (!empty) return;
+    const s = card.suggestion;
+    const since = s.days_since == null ? "עוד לא כתבת עליו" : `לא כתבת עליו ${s.days_since} ימים`;
+    const drafts = card.drafts_waiting ? `<li>טיוטות שמחכות: ${card.drafts.map((d) => escapeHtml(d.topic)).join(", ")}</li>` : "";
+    const el = document.createElement("section"); el.className = "morning";
+    el.innerHTML = `<h3>${escapeHtml(card.greeting)}</h3><ul><li>${escapeHtml(card.pace)}</li>
+      <li>נושא שאפשר לחזור אליו: <strong>${escapeHtml(s.topic)}</strong> (${since})</li>${drafts}</ul>
+      <button class="primary" type="button">✍️ תכתבי לי על זה</button>`;
+    el.querySelector("button").addEventListener("click", () => { $("input").value = s.prompt; $("input").focus(); });
+    empty.insertBefore(el, empty.querySelector(".hint"));
   }
   $("new-chat").addEventListener("click", () => { state.current = null; $("conv-title").textContent = "שיחה חדשה"; renderConversations(); renderEmpty(); $("input").focus(); });
 

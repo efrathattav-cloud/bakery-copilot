@@ -20,7 +20,7 @@ from . import auth, limits
 from .agent import get_model_client, run_turn
 from .config import ROOT, settings
 from .db import ContentItem, Conversation, Message, SessionLocal, engine, get_db, init_db
-from .digest import build_digest, send_digest
+from .digest import build_digest, morning_card, send_digest
 from .tools.invoices import recent_invoices
 
 
@@ -189,6 +189,13 @@ def stats(request: Request, db: Session = Depends(get_db)):
     user = auth.current_user(request, db)
     return {"spend_today_usd": round(limits.spend_today_usd(db), 4), "daily_cap_usd": settings.daily_cap_usd,
             "messages_last_hour": limits.messages_last_hour(db, user.id), "rate_limit_per_hour": settings.rate_limit_per_hour}
+
+
+@app.get("/api/morning")
+def morning(request: Request, db: Session = Depends(get_db)):
+    """The morning card shown on the empty chat screen."""
+    auth.current_user(request, db)
+    return morning_card(db)
 
 
 @app.post("/internal/digest")

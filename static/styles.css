@@ -138,3 +138,9 @@ button:disabled { opacity: .5; cursor: default; }
   .msg { padding: 8px 14px; }
   .composer { padding: 8px 14px 14px; }
 }
+
+/* ---------- morning card ---------- */
+.morning { text-align: start; background: var(--paper); border: 1px solid var(--line); border-inline-start: 4px solid var(--sage); border-radius: 14px; border-start-start-radius: 0; border-end-start-radius: 0; padding: 14px 18px; margin: 4px 0 18px; color: var(--ink); }
+.morning h3 { margin: 0 0 6px; font-size: 16px; font-weight: 500; }
+.morning ul { margin: 0 0 12px; padding-inline-start: 18px; font-size: 14px; line-height: 1.8; }
+.morning strong { font-weight: 500; color: var(--gold-dark); }

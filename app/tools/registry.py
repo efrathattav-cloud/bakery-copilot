@@ -112,6 +112,19 @@ TOOLS: list[dict[str, Any]] = [
         },
     },
     {
+        "name": "mark_published",
+        "description": (
+            "Mark a text that is already in her library as published. Use it when she says she posted a text "
+            "that was saved earlier as a draft, instead of saving it again. Find its id with search_content first."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {"id": {"type": "integer", "description": "the library item id from search_content"}},
+            "required": ["id"],
+            "additionalProperties": False,
+        },
+    },
+    {
         "name": "search_content",
         "description": (
             "Search her content library: what she already wrote, on which topic, when. "
@@ -151,6 +164,8 @@ def execute(name: str, tool_input: dict[str, Any], db: Session, *, user_id: int 
             result = quality.check_text(str(tool_input.get("text", "")), str(tool_input.get("format") or "other"))
         elif name == "save_content":
             result = library.save_content(db, saved_by=user_id, **_clean(tool_input))
+        elif name == "mark_published":
+            result = library.mark_published(db, id=tool_input.get("id", 0))
         elif name == "search_content":
             result = library.search_content(db, **_clean(tool_input))
         else:

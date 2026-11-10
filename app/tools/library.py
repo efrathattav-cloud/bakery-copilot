@@ -29,6 +29,17 @@ def save_content(db: Session, *, text: str, topic: str, format: str = "other", s
     return {"saved": True, "id": item.id, "topic": item.topic, "format": fmt, "status": status}
 
 
+def mark_published(db: Session, *, id: int) -> dict[str, Any]:
+    item = db.get(ContentItem, int(id))
+    if item is None:
+        return {"error": f"no library item with id {id}; search first to find the right id"}
+    if item.status == "published":
+        return {"already_published": True, "id": item.id, "topic": item.topic}
+    item.status = "published"
+    db.commit()
+    return {"updated": True, "id": item.id, "topic": item.topic, "status": "published"}
+
+
 def search_content(db: Session, *, query: str | None = None, format: str | None = None, status: str | None = None,
                    date_from: str | None = None, date_to: str | None = None, limit: int = 10) -> dict[str, Any]:
     stmt = select(ContentItem)

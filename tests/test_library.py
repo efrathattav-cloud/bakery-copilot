@@ -6,7 +6,7 @@ import pytest
 
 from app.db import ContentItem
 from app.tools import registry
-from app.tools.library import save_content, search_content
+from app.tools.library import mark_published, save_content, search_content
 
 
 @pytest.fixture(autouse=True)
@@ -60,8 +60,20 @@ def test_long_text_is_previewed_not_returned_whole(db):
     assert len(preview) <= 201 and preview.endswith("…")
 
 
+def test_mark_published_updates_the_same_row(db):
+    item_id = save_content(db, text="טקסט", topic="נושא")["id"]
+    assert mark_published(db, id=item_id)["updated"] is True
+    assert mark_published(db, id=item_id)["already_published"] is True
+    assert db.query(ContentItem).count() == 1
+    assert search_content(db, status="published")["items"][0]["id"] == item_id
+
+
+def test_mark_published_unknown_id_is_an_error(db):
+    assert "error" in mark_published(db, id=9999)
+
+
 def test_model_sees_content_tools_not_bakery_tools(db):
-    assert {"check_text", "save_content", "search_content"} == registry.TOOL_NAMES
+    assert {"check_text", "save_content", "mark_published", "search_content"} == registry.TOOL_NAMES
     out = json.loads(registry.execute("save_content", {"text": "טקסט", "topic": "נושא"}, db, user_id=None))
     assert out["saved"] is True
     found = json.loads(registry.execute("search_content", {"query": "נושא"}, db))

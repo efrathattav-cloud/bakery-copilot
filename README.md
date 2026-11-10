@@ -1,12 +1,33 @@
-# Bakery Copilot
+# בוחרות באומץ · Content Copilot
 
-A chat app for one bakery chain, built the Lesson 9 way: a chat UI, a backend with an agent loop and three tools, Postgres, and a morning digest, all on Railway for a few dollars a month. Staff ask about sales and log supplier invoices from a photo.
+A content copilot for Efrat-Yaara Hattav's women's community **"בוחרות באומץ"** (choosing with courage: boundaries, people-pleasing, fear of disappointing). It drafts community messages, posts and replies **in her brand voice**, checks texts against her voice rules, suggests replies to comments from a screenshot, and keeps a library of what she wrote.
 
-The plan lives in five files: [spec.md](spec.md) (what), [architecture.md](architecture.md) (how and where), [practice.md](practice.md) (how we work), [runbook.md](runbook.md) (when it breaks), [docs/tickets.md](docs/tickets.md) (the work, as issues). `CLAUDE.md` points Claude Code at the first three.
+Built from [MaceTenth/bakery-copilot](https://github.com/MaceTenth/bakery-copilot) (course final project, task 9). Same four layers, a chat UI, a FastAPI backend with an agent loop, Claude, and Postgres, with a new job.
+
+**Live on Railway:** _link added after the first deploy_
+
+## What it does
+
+| Ask | What happens |
+|---|---|
+| "תכתבי הודעה לקבוצה על אשמה" | A draft in her voice. Before showing it, the bot runs `check_text` and fixes what it finds. |
+| "תבדקי לי את הטקסט הזה…" | Feedback: the mechanical findings from `check_text`, plus tone and structure notes. |
+| 📎 a screenshot of a comment | Names the comment type, suggests one short reply, never mentions the participant's name. |
+| "על מה כתבתי החודש?" | Searches the content library. |
+| "תשמור את זה" / "פרסמתי" | Saves to the library, or marks an existing draft as published (no duplicates). |
+| Open the app | A morning card: this week's pace against her 2 to 3 target, a core topic she has not touched for a while, drafts waiting. |
+
+## How it is built
+
+- **Prompt:** [app/prompts/system.md](app/prompts/system.md), written from her brand-voice guide: voice and tone, structure by format, how to reply to participants, banned phrases, never invent a story, privacy.
+- **Tools** ([app/tools/](app/tools/)):
+  - `check_text`: the mechanical half of her pre-publish checklist, in plain code with no model: long dashes, banned phrases and openings, exclamation marks, questions, emoji outside her list, length by format.
+  - `save_content`, `search_content`, `mark_published`: the content library (`content_items` table).
+- **Morning card:** [app/digest.py](app/digest.py), built in code from the library (no model call, so it costs nothing). Shown at `GET /api/morning`.
+- **UI:** [static/](static/), Hebrew and right-to-left, in the logo's colours.
+- Limits from the original project stay: shared password, 30 messages per hour, a daily spend cap (`DAILY_CAP_USD`).
 
 ## Run it locally
-
-macOS and Linux:
 
 ```bash
 cp .env.example .env         # set APP_PASSWORD, APP_SECRET, ANTHROPIC_API_KEY
@@ -15,67 +36,37 @@ pip install -r requirements.txt
 uvicorn app.main:app --reload
 ```
 
-Windows, in PowerShell 7 with Python 3.12 (`winget install Python.Python.3.12`):
-
-```powershell
-Copy-Item .env.example .env  # set APP_PASSWORD, APP_SECRET, ANTHROPIC_API_KEY
-py -3.12 -m venv .venv
-.venv\Scripts\Activate.ps1
-pip install -r requirements.txt
-uvicorn app.main:app --reload
-```
-
-If PowerShell refuses to run `Activate.ps1` ("running scripts is disabled on this system"), run `Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser` once, or skip activation and start each command with `.venv\Scripts\python -m`, for example `.venv\Scripts\python -m uvicorn app.main:app --reload`.
-
-Open http://localhost:8000, type a name and the password. The first start seeds SQLite with the 29,115-line sales dataset and 10 suppliers (a few seconds).
-
-Try: "What sold best in the last week of August 2026?", "Revenue by branch for August 2026", or attach an invoice photo.
+On Windows (PowerShell): `Copy-Item .env.example .env`, `py -m venv .venv`, `.venv\Scripts\Activate.ps1`, then the same two lines. Open http://localhost:8000, type a name and the password.
 
 ## Tests and evals
 
 ```bash
-pytest -q                    # model mocked; seconds; no key needed
-python -m evals.run          # real model; one turn per case; appends evals/history.csv
-python -m evals.run --judge  # also grades wording with a cheaper model
+pytest -q                    # 49 tests, model mocked, seconds, no key needed
+python -m evals.run          # 9 cases against the real model, about $0.20
 ```
 
-The same three commands work in PowerShell once `.venv` is active.
-
-Tests prove the deterministic parts (parsing, dedup, limits, streaming, the tool loop with a scripted model). Evals prove the agent still behaves after a prompt, tool or model change. CI runs tests on every PR, and evals when the `ANTHROPIC_API_KEY` secret is set.
+The evals ([evals/cases.yaml](evals/cases.yaml)) check behaviour, not wording: the voice rules hold, no invented personal story, `check_text` runs on drafts and feedback, the library is searched before answering about past texts, nothing is saved unless asked, "I published it" updates instead of duplicating, short replies stay short, out-of-scope questions are declined. Last run: **9/9**.
 
 ## Deploy on Railway
 
-The short version follows; the full walkthrough for macOS, Linux and Windows, with every variable and secret, the CLI commands, the dashboard path, day-two operations and troubleshooting, is [docs/deploy-railway.md](docs/deploy-railway.md).
+1. New project → **Deploy from GitHub repo** → this repo, branch `main`. Railpack builds from `requirements.txt` and `.python-version`; no Dockerfile.
+2. **+ New → Database → PostgreSQL.**
+3. Variables on the web service: `APP_ENV=production`, `APP_PASSWORD`, `APP_SECRET` (32+ random characters), `ANTHROPIC_API_KEY`, `DATABASE_URL=${{Postgres.DATABASE_URL}}`, `TIMEZONE=Asia/Jerusalem`, optionally `MODEL`, `DAILY_CAP_USD`.
+4. Settings → Deploy → start command `uvicorn app.main:app --host 0.0.0.0 --port $PORT`, health check path `/health`.
+5. Settings → Networking → **Generate Domain**. Open it, sign in, ask for a draft.
 
-1. **Repo.** Push this folder to a private GitHub repo. Create the issues with `scripts/create_issues.sh` if you want the board (a bash script: on Windows, run it from Git Bash).
-2. **Project and services.** With the CLI (`brew install railway` on macOS, `scoop install railway` on Windows): `railway login`, `railway init --name bakery-copilot`, `railway add --database postgres`, then `railway add --service web --repo <owner>/bakery-copilot --branch main` and the same with `--service digest`. Railway's GitHub app needs access to the repo (Railway → Account Settings → Integrations → GitHub), or builds from GitHub fail with "repository not accessible".
-3. **Settings from code.** Once: `npm install --prefix .railway`. Then from the repo root `railway config plan` and `railway config apply`: `.railway/railway.ts` sets both start commands, the `/health` check, restart policies and the digest's cron schedule (`30 4 * * *`, UTC; 07:30 Israel in summer, 06:30 in winter). Railpack builds from `requirements.txt` with the Python version in `.python-version`, no Dockerfile.
-4. **Variables** on the web service: `APP_ENV=production`, `APP_PASSWORD`, `APP_SECRET` (`openssl rand -hex 32`, or the PowerShell generator in the guide), `ANTHROPIC_API_KEY`, `DATABASE_URL` as a reference to `${{Postgres.DATABASE_URL}}`, `MODEL=claude-opus-5-5`, `DAILY_CAP_USD=3.00`, `CRON_SECRET`, optionally `DIGEST_WEBHOOK_URL`, `TIMEZONE=Asia/Jerusalem`. Redeploy.
-5. **Digest variables.** The digest service references the web service's values: `APP_ENV=${{web.APP_ENV}}`, and the same for `APP_PASSWORD`, `APP_SECRET`, `ANTHROPIC_API_KEY`, `CRON_SECRET`, `MODEL` and `TIMEZONE`, plus `DATABASE_URL=${{Postgres.DATABASE_URL}}`. Set `DIGEST_WEBHOOK_URL` here if the digest should post somewhere. The service runs for seconds and exits.
-6. **First check.** Open the URL, sign in, ask a sales question, attach an invoice. `GET /health` must be 200. Then run through spec.md §7.
+The original course guide, with CLI commands and troubleshooting, is in [docs/deploy-railway.md](docs/deploy-railway.md). Deploy on push to `main` is on by default.
 
-Deploy on push to `main` is on by default. Rollback is Deployments → previous deploy → Redeploy.
+## Cost
 
-## Cost (as of October 2026)
-
-| Item | Estimate |
-|---|---|
-| Railway web service (0.05–0.1 vCPU, ~200 MB) | $3–4 / month |
-| Railway Postgres (small, 1 GB) | $1–2 / month |
-| Cron service (seconds a day) | cents |
-| **Railway total** | **$4–6 / month**, inside the Hobby plan's $5 most months |
-| Claude, 300 turns a day with history (Opus 5.5) | ~$18 / month; Sonnet 5.5 ~$9 |
-
-The model is the bill. `HISTORY_LIMIT`, `MODEL_EFFORT` and prompt caching are the three levers; `DAILY_CAP_USD` is the brake.
+Railway: about $5 a month (one web service and a small Postgres). Claude: a draft costs about 3 to 5 cents with Opus 5.5; `DAILY_CAP_USD` (default $3) is the brake.
 
 ## Layout
 
 ```
-app/            backend: main.py (API), agent.py (loop), tools/, db.py, auth.py, limits.py, costs.py, digest.py
-app/prompts/    system.md — the agent's job description
-static/         the chat UI (plain HTML, CSS, JS)
-data/           bakery_sales.csv (read-only dataset), suppliers.csv
+app/            main.py (API), agent.py (loop), tools/, db.py, auth.py, limits.py, costs.py, digest.py
+app/prompts/    system.md: the copilot's voice and rules
+static/         the chat UI (plain HTML, CSS, JS), logo
 tests/          pytest, model mocked
 evals/          cases.yaml, run.py, history.csv
-docs/           tickets.md, watch.md, deploy-railway.md
 ```

@@ -19,7 +19,7 @@ from sqlalchemy.orm import Session
 from . import auth, limits
 from .agent import get_model_client, run_turn
 from .config import ROOT, settings
-from .db import Conversation, Message, SessionLocal, engine, get_db, init_db
+from .db import ContentItem, Conversation, Message, SessionLocal, engine, get_db, init_db
 from .digest import build_digest, send_digest
 from .tools.invoices import recent_invoices
 
@@ -173,6 +173,15 @@ def chat(payload: ChatIn, request: Request, db: Session = Depends(get_db)):
 def invoices(request: Request, db: Session = Depends(get_db)):
     auth.current_user(request, db)
     return recent_invoices(db, limit=50)
+
+
+@app.get("/api/library")
+def library(request: Request, db: Session = Depends(get_db)):
+    """The content library for the side panel, newest first, full text included."""
+    auth.current_user(request, db)
+    rows = db.scalars(select(ContentItem).order_by(ContentItem.created_at.desc()).limit(200)).all()
+    return [{"id": r.id, "topic": r.topic, "format": r.format, "status": r.status, "text": r.text,
+             "created_at": r.created_at.isoformat(timespec="seconds")} for r in rows]
 
 
 @app.get("/api/stats")

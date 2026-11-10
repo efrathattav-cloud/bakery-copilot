@@ -39,8 +39,8 @@ except ImportError:  # pragma: no cover
 MAX_TOOL_ROUNDS = 6
 SYSTEM_PATH = ROOT / "app" / "prompts" / "system.md"
 FALLBACK_MODELS = {"claude-opus-5-5", "claude-opus-5", "claude-sonnet-5-5", "claude-fable-5-1"}
-REFUSAL_TEXT = ("I can't help with that request. If it is about sales or invoices, try rephrasing it; "
-                "for anything else, ask Dana.")
+REFUSAL_TEXT = ("לא אוכל לעזור בבקשה הזו כפי שהיא מנוסחת. "
+                "אפשר לנסח אותה אחרת, או לבקש טיוטה, משוב על טקסט או תגובה לצילום מסך.")
 
 
 # ---------------------------------------------------------------------------
@@ -209,7 +209,7 @@ def run_turn(db: Session, *, user: User, conversation: Conversation | None, text
     image_ref = f"img_{hashlib.sha256(image['data'].encode()).hexdigest()[:10]}" if image else None
 
     if conversation is None:
-        conversation = Conversation(user_id=user.id, title=(text or "Invoice photo")[:60])
+        conversation = Conversation(user_id=user.id, title=(text or "צילום מסך")[:60])
         db.add(conversation)
         db.commit()
         db.refresh(conversation)
@@ -218,7 +218,7 @@ def run_turn(db: Session, *, user: User, conversation: Conversation | None, text
     # 1. The user's message is saved first: it counts for the rate limit even if the stream dies.
     stored = text + (f"\n[image {image_ref}]" if image_ref else "")
     user_msg = Message(conversation_id=conversation.id, user_id=user.id, role="user",
-                       content=stored or "(invoice photo)", has_image=bool(image))
+                       content=stored or "(צילום מסך)", has_image=bool(image))
     db.add(user_msg)
     conversation.updated_at = utcnow()
     db.commit()

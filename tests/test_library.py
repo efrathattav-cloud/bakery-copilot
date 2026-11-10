@@ -78,3 +78,15 @@ def test_model_sees_content_tools_not_bakery_tools(db):
     assert out["saved"] is True
     found = json.loads(registry.execute("search_content", {"query": "נושא"}, db))
     assert found["count"] == 1
+
+
+def test_library_endpoint_lists_items_for_a_signed_in_user(client, db, logged_in):
+    save_content(db, text="שורה ראשונה\nשורה שנייה", topic="נושא לפאנל", format="post", status="published")
+    rows = client.get("/api/library").json()
+    assert rows[0]["topic"] == "נושא לפאנל" and rows[0]["status"] == "published"
+    assert rows[0]["text"].startswith("שורה ראשונה")
+
+
+def test_library_endpoint_needs_login(client):
+    client.cookies.clear()
+    assert client.get("/api/library").status_code == 401

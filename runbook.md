@@ -37,7 +37,7 @@ Written while everything works. Each entry is a sequence: click here, run this, 
 
 ## Deploy is stuck or the health check never passes
 
-1. Logs → look for the seed report (`sales_seeded: 29115`). A first deploy seeds the sales table and can take a minute; the health check timeout is 120 s.
+1. Logs → look for the startup report (`startup report: schema_version: 1`). It means the tables exist.
 2. If the database URL is wrong, `/health` returns 503 with `db:` in `problems`. Check the `DATABASE_URL` reference variable.
 3. Rollback to the previous deploy if users are waiting; fix in a PR.
 

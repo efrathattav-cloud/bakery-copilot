@@ -29,7 +29,6 @@ from .config import ROOT, settings
 from .costs import Usage, cost_usd
 from .db import Conversation, Message, Run, User, utcnow
 from .tools import registry
-from .tools.sales import branches, data_range
 
 try:  # the SDK is optional at import time so tests run without it configured
     import anthropic
@@ -134,12 +133,8 @@ def get_model_client() -> ModelClient:
 # ---------------------------------------------------------------------------
 
 def build_system(db: Session) -> list[dict]:
-    d_from, d_to = data_range(db)
     today = datetime.now(ZoneInfo(settings.timezone)).date()
-    text = (SYSTEM_PATH.read_text(encoding="utf-8")
-            .replace("{{DATA_FROM}}", str(d_from or "unknown")).replace("{{DATA_TO}}", str(d_to or "unknown"))
-            .replace("{{BRANCHES}}", ", ".join(branches(db)) or "unknown")
-            .replace("{{TODAY}}", today.isoformat()))
+    text = SYSTEM_PATH.read_text(encoding="utf-8").replace("{{TODAY}}", today.isoformat())
     # One cached block: tools + system form the stable prefix every turn reuses.
     return [{"type": "text", "text": text, "cache_control": {"type": "ephemeral"}}]
 
@@ -177,14 +172,10 @@ def _summarise_result(result_text: str) -> str:
         return result_text[:90]
     if "error" in r:
         return f"error: {str(r['error'])[:80]}"
-    if "status" in r and "created" in r:  # log_invoice
-        return f"{'created' if r['created'] else r.get('reason', 'existing')} · {r['status']}" + (" · flagged" if r.get("flagged") else "")
-    if "matches" in r:  # lookup_supplier
-        return f"{len(r['matches'])} match" + ("" if len(r["matches"]) == 1 else "es")
-    if "row_count" in r:  # sales_query grouped
-        return f"{r['row_count']} rows · {r['metric']} by {r['group_by']}"
-    if "value" in r:  # sales_query total
-        return f"{r['metric']} = {r['value']}"
+    if "issues" in r:  # check_text
+        return "clean" if r.get("ok") else f"{len(r['issues'])} issue(s)"
+    if "count" in r:  # search_content
+        return f"{r['count']} found"
     return result_text[:90]
 
 

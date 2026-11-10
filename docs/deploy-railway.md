@@ -309,7 +309,7 @@ railway logs --service digest -d -n 20
 
 `cron run` enqueues the run and returns; it can take a few minutes to show in `cron list`. The log must end with the six digest lines and `[sent to webhook: True]` (or `False` when `DIGEST_WEBHOOK_URL` is not set).
 
-`web`'s first start seeds 29,115 sales rows and 10 suppliers, which can take up to a minute (the health timeout is 120 s). `railway logs --service web -d -n 50` shows it as one line, `seed report: schema_version: 1, suppliers_seeded: 10, sales_seeded: 29115`. Later deploys print `0` for both counts: the seed only fills empty tables.
+`web`'s first start creates the tables in seconds. `railway logs --service web -d -n 50` shows it as one line, `startup report: schema_version: 1`.
 
 Last, if the evals should run in CI: `gh secret set ANTHROPIC_API_KEY --repo MaceTenth/bakery-copilot` asks for the value without echoing it. Without the secret the evals job prints "skipped" and only the tests gate the merge.
 

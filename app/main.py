@@ -1,4 +1,4 @@
-"""Bakery Copilot backend: the API, the static UI, the health check, the digest hook.
+"""בוחרות באומץ backend: the API, the static UI, the health check, the digest hook.
 
 One service does everything (architecture.md, "Where things run"). The agent
 loop itself lives in agent.py; this file is doors, locks and plumbing.
@@ -21,14 +21,13 @@ from .agent import get_model_client, run_turn
 from .config import ROOT, settings
 from .db import ContentItem, Conversation, Message, SessionLocal, engine, get_db, init_db
 from .digest import build_digest, morning_card, send_digest
-from .tools.invoices import recent_invoices
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     app.state.init_report = init_db()
     # One line in the deploy log, so a first deploy can be checked (docs/deploy-railway.md, step 7).
-    print("seed report: " + ", ".join(f"{k}: {v}" for k, v in app.state.init_report.items()), flush=True)
+    print("startup report: " + ", ".join(f"{k}: {v}" for k, v in app.state.init_report.items()), flush=True)
     app.state.model_client = get_model_client()
     yield
 
@@ -138,7 +137,7 @@ def chat(payload: ChatIn, request: Request, db: Session = Depends(get_db)):
     """One turn. Checks the three limits, then streams the agent's events as SSE."""
     user = auth.current_user(request, db)
     if not payload.message.strip() and payload.image is None:
-        raise HTTPException(400, "Say something or attach an invoice.")
+        raise HTTPException(400, "כתבי משהו או צרפי צילום מסך.")
     limits.check_rate_limit(db, user.id)
     limits.check_daily_cap(db)
     limits.check_upload_size(payload.image.data if payload.image else None)
@@ -166,14 +165,8 @@ def chat(payload: ChatIn, request: Request, db: Session = Depends(get_db)):
 
 
 # ---------------------------------------------------------------------------
-# Invoices, stats, digest
+# Library, morning card, stats, digest
 # ---------------------------------------------------------------------------
-
-@app.get("/api/invoices")
-def invoices(request: Request, db: Session = Depends(get_db)):
-    auth.current_user(request, db)
-    return recent_invoices(db, limit=50)
-
 
 @app.get("/api/library")
 def library(request: Request, db: Session = Depends(get_db)):

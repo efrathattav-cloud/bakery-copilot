@@ -79,7 +79,7 @@
     const div = document.createElement("div");
     div.className = `msg ${role}`;
     const who = role === "user" ? (state.user ? state.user.name : "You") : "בוחרות באומץ";
-    const initial = role === "user" ? who.trim().charAt(0).toUpperCase() : "🌱";
+    const initial = role === "user" ? who.trim().charAt(0).toUpperCase() : "🧭";
     const when = time ? new Date(time) : new Date();
     const stamp = when.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
     let inner = "";

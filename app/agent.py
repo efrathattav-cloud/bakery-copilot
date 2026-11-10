@@ -228,7 +228,7 @@ def run_turn(db: Session, *, user: User, conversation: Conversation | None, text
     content: list[dict] = []
     if image:
         content.append({"type": "image", "source": {"type": "base64", "media_type": image["media_type"], "data": image["data"]}})
-    prompt_text = text or "Please read this invoice and log it."
+    prompt_text = text or "זה צילום מסך של תגובה מהקבוצה. תציעי לי תשובה."
     if image_ref:
         prompt_text += f"\n\n(image reference: {image_ref})"
     content.append({"type": "text", "text": prompt_text})

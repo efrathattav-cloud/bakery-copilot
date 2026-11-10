@@ -62,7 +62,7 @@ button:disabled { opacity: .5; cursor: default; filter: none; box-shadow: none; 
 .brand { display: flex; align-items: center; gap: 12px; padding: 14px 16px; height: 56px; box-shadow: 0 1px 0 var(--bg-0); background: var(--grad); color: #fff; }
 .brand small { color: rgba(255,255,255,.85); font-weight: 600; }
 .brand .dot { width: 30px; height: 30px; border-radius: 10px; background: #fff; display: grid; place-items: center; flex: none; box-shadow: 0 4px 14px rgba(0,0,0,.35); }
-.brand .dot::after { content: "🌱"; font-size: 17px; }
+.brand .dot::after { content: "🧭"; font-size: 17px; }
 .sidebar > .primary { margin: 14px 12px 8px; }
 .conversations { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 2px; padding: 4px 8px 8px; }
 .conversations::before { content: "Conversations"; font-size: 11px; font-weight: 800; letter-spacing: .6px; text-transform: uppercase; color: var(--muted); padding: 10px 8px 6px; }

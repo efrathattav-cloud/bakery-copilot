@@ -119,6 +119,19 @@ def test_image_message_carries_a_reference(client, db, logged_in, fake):
     assert user_msg.has_image is True and "[image img_" in user_msg.content
 
 
+def test_image_without_text_is_treated_as_a_group_comment(client, db, logged_in, fake):
+    import base64
+
+    fake.turns.append([ModelEvent(type="stop", stop_reason="end_turn", usage=Usage(10, 2),
+                                  content=[{"type": "text", "text": "סוג התגובה: שיתוף אישי קצר."}])])
+    png = base64.b64encode(b"\x89PNG\r\n\x1a\nfake").decode()
+    events = read_sse(client.post("/api/chat", json={"message": "", "image": {"media_type": "image/png", "data": png}}))
+    assert events[-1]["type"] == "done"
+    sent_text = fake.last_messages[-1]["content"][1]["text"]
+    assert "צילום מסך של תגובה מהקבוצה" in sent_text
+    assert "invoice" not in sent_text.lower()
+
+
 def test_system_prompt_keeps_the_brand_voice_rules(client, db):
     # The content copilot: the prompt must name the community, keep the core
     # voice rules, and have every placeholder filled (today's date included).

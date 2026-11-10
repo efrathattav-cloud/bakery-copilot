@@ -26,7 +26,7 @@ BANNED_PHRASES = {
 BANNED_OPENINGS = ("נשים רבות מתמודדות",)
 
 # The guide's emoji list, by base code point (variation selectors and skin tones ignored).
-ALLOWED_EMOJI = {0x2764, 0x1F49B, 0x1F331, 0x1F3A7, 0x270D, 0x1F463, 0x1F605, 0x1F64F}
+ALLOWED_EMOJI = {0x2764, 0x1F49B, 0x1F331, 0x1F3A7, 0x270D, 0x1F463, 0x1F605, 0x1F64F, 0x1F525}  # 🔥 approved 2026-11-10
 _EMOJI = re.compile("[\U0001F300-\U0001FAFF☀-➿]")
 
 # Words per format: a soft ceiling, the guide's "shorter is better when nothing is lost".

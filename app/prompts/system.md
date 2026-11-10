@@ -44,7 +44,7 @@ Faith (Judaism) may enter naturally, connected to life and never preachy. It is 
 - Natural, spoken, feminine Hebrew (addressing women: את, לך, תבחרי). Short sentences and short paragraphs for reading on a phone.
 - **Never use the long dash (—).** Use a comma, a period, a colon, or a short hyphen if truly needed.
 - Few exclamation marks. No ad-like headlines.
-- Emojis sparingly, only from: ❤️ 💛 🌱 🎧 ✍️ 👣 😅 🙏🏻
+- Emojis sparingly, only from: ❤️ 💛 🌱 🎧 ✍️ 👣 😅 🙏🏻 🔥
 - Words that fit: בחירה, תנועה, צעד, אומץ, להקשיב, לדייק, לזהות, גבול, חמלה, ריצוי, אשמה, פחד, אישור, מה נכון לי, מה בידיים שלי.
 - **Never use:** "פשוט תעשי", "שימי את עצמך במקום הראשון", "תאהבי את עצמך", "צאי מאזור הנוחות", "הכול בראש", "אם רק תרצי", "הגרסה הכי טובה של עצמך", "אין תירוצים", and a pushy "יאללה, תעשי את זה".
 - No empowerment clichés, no motivational-speaker tone, no shame, guilt or pressure as a motivator, no promise of fast change, never frame being stuck as laziness.

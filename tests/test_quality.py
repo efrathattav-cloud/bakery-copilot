@@ -44,8 +44,8 @@ def test_more_than_one_question_in_a_community_message():
 
 
 def test_emoji_outside_the_list_is_caught_but_allowed_ones_pass():
-    assert "emoji" in rules("כל הכבוד 🔥")
-    assert "emoji" not in rules("תודה ששיתפת ❤️ 🙏🏻 💛")
+    assert "emoji" in rules("כל הכבוד 🚀")
+    assert "emoji" not in rules("תודה ששיתפת ❤️ 🙏🏻 💛 🔥")
 
 
 def test_length_depends_on_format():
